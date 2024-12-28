@@ -150,6 +150,7 @@ dependencies = [
  "regex",
  "rtlola-frontend",
  "rtlola-parser",
+ "serde",
  "serde_json",
 ]
 
