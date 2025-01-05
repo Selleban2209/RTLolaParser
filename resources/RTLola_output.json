@@ -3,7 +3,10 @@
     "h"
   ],
   "outputs": [
-    "height_above_ground"
+    {
+      "variable": "height_above_ground",
+      "comparison": "h > 0.0"
+    }
   ],
   "triggers": [
     {
