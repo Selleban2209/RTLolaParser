@@ -2,7 +2,7 @@
 use std::{fs, path::PathBuf};
 use rtlola_frontend::{parse, parse_to_ast, ParserConfig};
 use ast::RtLolaAst;
-use rtlola_parser::ast::{self, Expression, ExpressionKind, BinOp};
+use rtlola_parser::ast::{self, BinOp, Expression, ExpressionKind, LitKind};
 use rtlola_frontend::mir::RtLolaMir;
 pub use rtlola_parser::ast::OutputKind;
 use serde::Serialize;
@@ -12,10 +12,17 @@ use std::fmt::Debug;
 
 #[derive(Serialize)]
 struct SpecificationJson {
-    inputs: Vec<String>,
+    inputs: Vec<Input>,
     outputs: Vec<Output>,
     triggers: Vec<Trigger>,
 }
+
+#[derive(Serialize)]
+struct Input {
+    name: String,
+    type_: String,
+}
+
 
 #[derive(Serialize)]
 struct Output {
@@ -69,11 +76,14 @@ fn main(){
 
 fn rtlola_ast_to_json(ast: &RtLolaAst) -> SpecificationJson{
 
-    let inputs:Vec<String>  = ast
+  let inputs: Vec<Input> = ast
         .inputs
         .iter()
-        .map(|input| input.name.name.clone())
-        .collect();
+        .map(|input| Input {
+            name: input.name.name.clone(),
+            type_: input.ty.to_string(), // Assuming `ty` is the field representing the type
+            })
+            .collect();
 
             // Updated code for constructing outputs
     let outputs: Vec<Output> = ast
@@ -108,32 +118,32 @@ fn rtlola_ast_to_json(ast: &RtLolaAst) -> SpecificationJson{
         .collect();
 
         let triggers: Vec<Trigger> = ast
-        .outputs
-        .iter()
-        .filter_map(|output| match &output.kind {
-            OutputKind::Trigger => {
-                let condition = output
-                    .eval
-                    .first()
-                    .and_then(|eval| eval.condition.as_ref())
-                    .map(|expr| format!("{:?}", expr))
-                    .unwrap_or_else(|| "No condition".to_string());
+    .outputs
+    .iter()
+    .filter_map(|output| match &output.kind {
+        OutputKind::Trigger => {
+            let condition = output
+                .eval
+                .first()
+                .and_then(|eval| eval.condition.as_ref())
+                .map(|expr| expression_to_string(expr)) // Convert condition to string
+                .unwrap_or_else(|| "No condition".to_string());
 
-                let message = output
-                    .eval
-                    .first()
-                    .and_then(|eval| {
-                        eval.eval_expression
-                            .as_ref()
-                            .map(|expr| format!("{:?}", expr))
-                    })
-                    .unwrap_or_else(|| "No message".to_string());
+            let message = output
+                .eval
+                .first()
+                .and_then(|eval| {
+                    eval.eval_expression
+                        .as_ref()
+                        .map(|expr| expression_to_string(expr)) // Convert message to string
+                })
+                .unwrap_or_else(|| "No message".to_string());
 
-                Some(Trigger { condition, message })
-            }
-            _ => None,
-        })
-        .collect();
+            Some(Trigger { condition, message })
+        }
+        _ => None,
+    })
+    .collect();
     SpecificationJson {
         inputs,
         outputs,
@@ -158,8 +168,20 @@ fn operator_to_string(op: &BinOp) -> &str {
 // Helper function to convert an expression to a string
 fn expression_to_string(expr: &Expression) -> String {
     match &expr.kind {
-        ExpressionKind::Ident(ident) => ident.name.clone(),
-        ExpressionKind::Lit(literal) => literal.to_string(),
-        _ => "complex_expression".to_string(), // For complex expressions
+        ExpressionKind::Ident(ident) => ident.name.clone(), // Variable names directly
+        ExpressionKind::Lit(literal) => match &literal.kind {
+            LitKind::Numeric(value, _) => value.clone(), // Numeric values
+            LitKind::Str(value) => value.clone(),
+            //Todo -> Extend the literal structs
+            LitKind::RawStr(_) => todo!(),
+            LitKind::Bool(_) => todo!(),        // String values
+        },
+        ExpressionKind::Binary(op, lhs, rhs) => format!(
+            "{} {} {}",
+            expression_to_string(lhs),       // Left-hand side as string
+            operator_to_string(op),          // Operator as string
+            expression_to_string(rhs)        // Right-hand side as string
+        ),
+        _ => "complex_expression".to_string(), // Fallback for unsupported kinds
     }
 }

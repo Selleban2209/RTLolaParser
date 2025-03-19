@@ -11,3 +11,7 @@ serde_json = "1.0.132"
 rtlola-frontend = "0.7.0"
 rtlola-parser = "0.3.2"
 regex = "1.7"
+
+[lib]
+name = "spec_parser"
+crate-type = ["cdylib"]      
