@@ -22,7 +22,6 @@ struct Input {
     type_: String,
 }
 
-
 #[derive(Serialize)]
 struct Output {
     variable: String,
@@ -42,7 +41,7 @@ pub extern "C" fn parse_specification(file_path: *const c_char) -> *mut c_char {
         CStr::from_ptr(file_path)
     };
     let file_path = c_str.to_str().unwrap();
-    println!("Parsing specification from file: {}", file_path);
+    //println!("Parsing specification from file: {}", file_path);
     let file_path = PathBuf::from(file_path);
 
     let config = match ParserConfig::from_path(file_path) {

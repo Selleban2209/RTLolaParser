@@ -14,4 +14,4 @@ regex = "1.7"
 
 [lib]
 name = "lola_parser"
-crate-type = ["staticlib"]      
+crate-type = ["cdylib"]         
