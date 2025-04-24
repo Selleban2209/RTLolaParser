@@ -13,5 +13,5 @@ rtlola-parser = "0.3.2"
 regex = "1.7"
 
 [lib]
-name = "spec_parser"
-crate-type = ["cdylib"]      
+name = "lola_parser"
+crate-type = ["staticlib"]      

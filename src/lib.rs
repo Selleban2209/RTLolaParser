@@ -22,6 +22,7 @@ struct Input {
     type_: String,
 }
 
+
 #[derive(Serialize)]
 struct Output {
     variable: String,
@@ -41,6 +42,7 @@ pub extern "C" fn parse_specification(file_path: *const c_char) -> *mut c_char {
         CStr::from_ptr(file_path)
     };
     let file_path = c_str.to_str().unwrap();
+    println!("Parsing specification from file: {}", file_path);
     let file_path = PathBuf::from(file_path);
 
     let config = match ParserConfig::from_path(file_path) {
@@ -58,12 +60,14 @@ pub extern "C" fn parse_specification(file_path: *const c_char) -> *mut c_char {
             return std::ptr::null_mut();
         }
     };
+    //println!("Parsed AST: {:?}", ast);
 
     let json_data = rtlola_ast_to_json(&ast);
     let json_string = serde_json::to_string_pretty(&json_data).expect("Failed to serialize JSON");
-
+    //print!("JSON: {}", json_string);
     let c_string = std::ffi::CString::new(json_string).unwrap();
     c_string.into_raw()
+    
 }
 
 #[no_mangle]
@@ -182,3 +186,4 @@ fn expression_to_string(expr: &Expression) -> String {
         _ => "complex_expression".to_string(),
     }
 }
+
